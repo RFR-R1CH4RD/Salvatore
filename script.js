@@ -2,16 +2,6 @@ let expirationTime;  // A kulcs lejárati ideje
 let startTime;
 let intervalId;
 
-function generateKey() {
-    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let key = '';
-    for (let i = 0; i < 27; i++) {
-        let char = characters.charAt(Math.floor(Math.random() * characters.length));
-        key += char;
-    }
-    return key;
-}
-
 function updateKey() {
     const keyBox = document.querySelector('.key-box');
     const expirationText = document.querySelector('.expiration-text');
@@ -43,7 +33,8 @@ function updateKey() {
                 requestAnimationFrame(updateTimer); // Frissítés
             }
             updateTimer();  // Indítjuk az időzítőt
-        });
+        })
+        .catch(error => console.error('Error fetching key:', error)); // Hiba kezelése
 }
 
 // Kulcs másolása
