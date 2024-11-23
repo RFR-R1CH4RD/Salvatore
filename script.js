@@ -1,6 +1,5 @@
-let expirationTime = 24 * 60 * 60 * 1000; // 24 óra
+let expirationTime;  // A kulcs lejárati ideje
 let startTime;
-let lastUpdateTime;
 let intervalId;
 
 function generateKey() {
@@ -17,40 +16,37 @@ function updateKey() {
     const keyBox = document.querySelector('.key-box');
     const expirationText = document.querySelector('.expiration-text');
 
-    function resetTimer() {
-        const key = generateKey();
-        keyBox.textContent = key;
-        startTime = Date.now();
-        lastUpdateTime = startTime;
+    // API hívás a kulcs lekérésére
+    fetch('/api/generate-key')
+        .then(response => response.json())
+        .then(data => {
+            const key = data.key;
+            const expirationDate = data.expirationDate;
 
-        if (intervalId) {
-            cancelAnimationFrame(intervalId);
-        }
+            keyBox.textContent = key;
+            expirationTime = expirationDate - Date.now();  // Frissítjük a lejárati időt
 
-        function updateTimer() {
-            const currentTime = Date.now();
-            const elapsedTime = currentTime - startTime;
-            const remainingTime = expirationTime - elapsedTime;
+            // Frissítjük az időzítőt
+            function updateTimer() {
+                const remainingTime = expirationDate - Date.now();
 
-            if (remainingTime <= 0) {
-                resetTimer(); // Új kulcs és időzítő, ha lejár az idő
-            } else {
-                const hours = Math.floor(remainingTime / (1000 * 60 * 60));
-                const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-                expirationText.textContent = `Key valid for: ${hours} hours ${minutes} minutes ${seconds} seconds`;
+                if (remainingTime <= 0) {
+                    expirationText.textContent = "Key expired";
+                    resetTimer();  // Új kulcsot generálunk, ha lejárt
+                } else {
+                    const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+                    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+                    expirationText.textContent = `Key valid for: ${hours} hours ${minutes} minutes ${seconds} seconds`;
+                }
+
+                requestAnimationFrame(updateTimer); // Frissítés
             }
-
-            // Tovább hívjuk az updateTimer-t a következő frame-ben
-            intervalId = requestAnimationFrame(updateTimer);
-        }
-
-        updateTimer(); // Indítjuk az időzítést
-    }
-
-    resetTimer();
+            updateTimer();  // Indítjuk az időzítőt
+        });
 }
 
+// Kulcs másolása
 function copyKey() {
     const keyBox = document.querySelector('.key-box');
     const range = document.createRange();
@@ -68,6 +64,7 @@ function copyKey() {
     }, 1500);
 }
 
+// Az oldal betöltődésekor frissítjük a kulcsot
 window.onload = () => {
     updateKey();
 };
