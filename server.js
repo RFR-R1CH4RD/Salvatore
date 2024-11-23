@@ -24,27 +24,7 @@ app.get('/api/generate-key', (req, res) => {
     res.json({ key: newKey, expirationDate });
 });
 
-// Endpoint a kulcs ellenőrzésére
-app.get('/api/check-key/:key', (req, res) => {
-    const key = req.params.key;
-    const expirationDate = keys[key];
-    
-    if (expirationDate) {
-        const remainingTime = expirationDate - Date.now();
-        if (remainingTime > 0) {
-            const hours = Math.floor(remainingTime / (1000 * 60 * 60));
-            const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-            res.json({ valid: true, expirationTime: `${hours} hours ${minutes} minutes ${seconds} seconds` });
-        } else {
-            res.json({ valid: false, message: "Key expired" });
-        }
-    } else {
-        res.json({ valid: false, message: "Invalid key" });
-    }
-});
-
 // A szerver indítása
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server running on port ${process.env.PORT || 3000}`);
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
