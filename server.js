@@ -11,9 +11,14 @@ app.use(express.json()); // JSON adatok fogadása
 
 // Endpoint a kulcs generálásához
 app.post('/generate-key', (req, res) => {
-    const key = uuidv4().replace(/-/g, '').slice(0, 27); // 27 karakter hosszú kulcs
-    const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 órás lejárat
-    res.json({ key, expiration });
+    try {
+        const key = uuidv4().replace(/-/g, '').slice(0, 27); // 27 karakter hosszú kulcs
+        const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 órás lejárat
+        res.json({ key, expiration });
+    } catch (error) {
+        console.error('Error generating key:', error);
+        res.status(500).json({ message: 'Hiba történt a kulcs generálása közben' });
+    }
 });
 
 // Statikus fájlok kiszolgálása
