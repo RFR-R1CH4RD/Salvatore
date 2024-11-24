@@ -1,30 +1,46 @@
-const express = require('express');
-const app = express();
-const cors = require('cors');
-const { v4: uuidv4 } = require('uuid'); // UUID könyvtár a kulcsokhoz
+// Az API URL a Render.com-on futó backendhez
+const API_URL = 'https://salvatore.onrender.com/generate-key';
 
-const PORT = process.env.PORT || 3000;
+// Kulcs lekérése a backendről
+async function fetchKey() {
+    try {
+        const response = await fetch(API_URL, { method: 'POST' });
+        const data = await response.json();
+        if (response.ok) {
+            displayKey(data.key, data.expiration);
+        } else {
+            console.error('Hiba történt:', data.message);
+        }
+    } catch (error) {
+        console.error('Szerver elérhetetlen:', error);
+    }
+}
 
-// Middleware
-app.use(cors());
-app.use(express.json()); // JSON adatok fogadása
+// Kulcs megjelenítése
+function displayKey(key, expiration) {
+    const keyBox = document.querySelector('.key-box');
+    const expirationText = document.querySelector('.expiration-text');
+    keyBox.textContent = key;
 
-// Endpoint a kulcs generálásához
-app.post('/generate-key', (req, res) => {
-    const key = uuidv4().replace(/-/g, '').slice(0, 27); // 27 karakter hosszú kulcs
-    const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 órás lejárat
-    res.json({ key, expiration });
-});
+    const expirationDate = new Date(expiration);
+    expirationText.textContent = `Key valid until: ${expirationDate.toLocaleString()}`;
+}
 
-// Statikus fájlok kiszolgálása
-app.use(express.static('public'));
+// Kulcs másolása
+function copyKey() {
+    const keyBox = document.querySelector('.key-box');
+    const range = document.createRange();
+    range.selectNodeContents(keyBox);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.execCommand('copy');
 
-// Alapértelmezett válasz
-app.get('/', (req, res) => {
-    res.send('API működik!');
-});
+    const button = document.querySelector('.copy-button');
+    button.textContent = 'Key Copied!';
+    setTimeout(() => {
+        button.textContent = 'Copy Key';
+    }, 1500);
+}
 
-// Server indítása
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+window.onload = fetchKey;
