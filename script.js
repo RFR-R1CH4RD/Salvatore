@@ -1,61 +1,30 @@
-let expirationTime;  // A kulcs lejárati ideje
-let startTime;
-let intervalId;
+const express = require('express');
+const app = express();
+const cors = require('cors');
+const { v4: uuidv4 } = require('uuid'); // UUID könyvtár a kulcsokhoz
 
-function updateKey() {
-    const keyBox = document.querySelector('.key-box');
-    const expirationText = document.querySelector('.expiration-text');
+const PORT = process.env.PORT || 3000;
 
-    // API hívás a kulcs lekérésére
-    fetch('/api/generate-key')
-        .then(response => response.json())
-        .then(data => {
-            const key = data.key;
-            const expirationDate = data.expirationDate;
+// Middleware
+app.use(cors());
+app.use(express.json()); // JSON adatok fogadása
 
-            keyBox.textContent = key;
-            expirationTime = expirationDate - Date.now();  // Frissítjük a lejárati időt
+// Endpoint a kulcs generálásához
+app.post('/generate-key', (req, res) => {
+    const key = uuidv4().replace(/-/g, '').slice(0, 27); // 27 karakter hosszú kulcs
+    const expiration = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 órás lejárat
+    res.json({ key, expiration });
+});
 
-            // Frissítjük az időzítőt
-            function updateTimer() {
-                const remainingTime = expirationDate - Date.now();
+// Statikus fájlok kiszolgálása
+app.use(express.static('public'));
 
-                if (remainingTime <= 0) {
-                    expirationText.textContent = "Key expired";
-                    resetTimer();  // Új kulcsot generálunk, ha lejárt
-                } else {
-                    const hours = Math.floor(remainingTime / (1000 * 60 * 60));
-                    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-                    expirationText.textContent = `Key valid for: ${hours} hours ${minutes} minutes ${seconds} seconds`;
-                }
+// Alapértelmezett válasz
+app.get('/', (req, res) => {
+    res.send('API működik!');
+});
 
-                requestAnimationFrame(updateTimer); // Frissítés
-            }
-            updateTimer();  // Indítjuk az időzítőt
-        })
-        .catch(error => console.error('Error fetching key:', error)); // Hiba kezelése
-}
-
-// Kulcs másolása
-function copyKey() {
-    const keyBox = document.querySelector('.key-box');
-    const range = document.createRange();
-    range.selectNodeContents(keyBox);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    document.execCommand('copy');
-
-    const button = document.querySelector('.copy-button');
-    button.textContent = 'Key Copied!';
-
-    setTimeout(() => {
-        button.textContent = 'Copy Key';
-    }, 1500);
-}
-
-// Az oldal betöltődésekor frissítjük a kulcsot
-window.onload = () => {
-    updateKey();
-};
+// Server indítása
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});
