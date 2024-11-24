@@ -5,14 +5,23 @@ const API_URL = 'https://salvatore.onrender.com/generate-key';
 async function fetchKey() {
     try {
         const response = await fetch(API_URL, { method: 'POST' });
-        const data = await response.json();
-        if (response.ok) {
-            displayKey(data.key, data.expiration);
-        } else {
-            console.error('Hiba történt:', data.message);
+
+        // Ellenőrizzük, hogy a válasz JSON
+        if (!response.ok) {
+            throw new Error(`Szerver hiba: ${response.status}`);
         }
+
+        const data = await response.json();
+
+        // Ellenőrizzük, hogy a válasz tartalmazza a várt adatokat
+        if (!data.key || !data.expiration) {
+            throw new Error('Érvénytelen válaszformátum.');
+        }
+
+        displayKey(data.key, data.expiration);
     } catch (error) {
-        console.error('Szerver elérhetetlen:', error);
+        console.error('Hiba történt a kulcs lekérésekor:', error.message);
+        alert('Hiba történt a kulcs lekérésekor! Kérlek próbáld újra később.');
     }
 }
 
